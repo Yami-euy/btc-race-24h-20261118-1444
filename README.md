@@ -16,17 +16,17 @@ dipakai lagi. Nama repo di badge di atas: btc-race-24h-20261118-1444.
 Stabilised dip-buy, long only, maks 1 posisi:
 
 - Dip diukur terhadap rolling high 240 bar (4 jam). Entry pertama (90% cash)
-  hanya setelah dip berhenti jatuh: close harus reclaim ≥15 bps dari running
+  hanya setelah dip berhenti jatuh: close harus reclaim ≥8 bps dari running
   dip low. Bounce 5 bar yang lama (BOUNCE v3) masuk terlalu dini di dead-cat
   bounce; reclaim dari low menunggu belokan beneran.
 - Tranche kedua (sisa 10% cash) hanya kalau dip makin dalam ke ≤−190 bps
   DAN sudah stabil juga — beli kaki kedua di harga yang lebih bagus, bukan
   averaging down saat masih jatuh.
-- Take-profit bertingkat: entry dalam (dip ≥−180 bps) boleh jalan ke +180 bps
-  (V pagi yang besar bayar seharian); entry dangkal bank +60 bps cepat.
-  TP 200 bps dites dan GAGAL di dev window — harga puncak cuma +185 bps di
-  atas cost, jadi TP 200 tidak pernah kena dan posisi malah dijual max-hold
-  setelah gain-nya balik (config A: +$9,42).
+- Take-profit bertingkat: entry dalam (dip ≥−180 bps) boleh jalan ke +210 bps
+  (V pagi yang besar bayar seharian — RECLAIM 8 masuk lebih murah jadi puncak
+  +216 bps di atas cost); tier tengah (dip ≥−140 bps) bank +75 bps; entry
+  dangkal bank +60 bps cepat. TP 200 pernah gagal di ronde 1 karena entry
+  RECLAIM 15 lebih mahal (puncak cuma +185 bps di atas cost).
 - Regime filter: tidak ada entry baru saat return 6 jam di bawah −25 bps
   (sore hari di dev window isinya dip dangkal yang recovery-nya cuma ~30 bps
   lalu lanjut turun — beli itu sama dengan balikin profit pagi).
@@ -36,20 +36,19 @@ Stabilised dip-buy, long only, maks 1 posisi:
 
 ## Hasil grade lokal (kit resmi, `grade-local --driver process`)
 
-Diperiksa 2026-11-18 ~23:00 WIB, dua eksekusi, L1 regrade reproduced byte for byte:
+Diperiksa 2026-11-18 ~23:52 WIB, dua eksekusi, L1 regrade reproduced byte for byte:
 
-- **Net PnL dev window: +21,745531 USDC (+2,17%) — lolos dev gate (PnL > 0)**
+- **Net PnL dev window: +25,297768 USDC (+2,53%) — lolos dev gate (PnL > 0)**
 - 6 trades (3 round trip, semuanya menang), win rate 100%, max drawdown 0,64%
-- Fees 1,54 USDC; PnL di 2x fees masih +20,20 USDC
+- Fees 1,544545 USDC; PnL di 2x fees masih +23,743377 USDC
 - Guardrails terpenuhi (≥1 trade, drawdown ≤25%)
-- action_log_sha256: 1e9376e9e228059e8e1c9bd990d86656f0539b9ab9f7ca5b539064eafa5024f3
+- action_log_sha256: 306039d66b577e717107134b374acacf19de04d4f301592ce04be763b791b95c
   (hash lokal proses-driver; hash server akan beda karena sandbox/docker + node v26)
 
 Perbandingan: BOUNCE v3 di dev window yang sama +17,84 USDC (1 round trip);
-bot juara race lama (strescco) +23,80 USDC di window ini. STABLE-DIP
-mengalahkan BOUNCE (+$3,91) dan masih $2,05 di bawah juara — juara itu
-menangkap 2 ayunan dip-bounce, kami juga 3 round trip tapi ayunan kedua
-kami lebih kecil.
+bot juara race lama (strescco) +23,80 USDC di window ini. STABLE-DIP ronde 2
+mengalahkan BOUNCE (+$7,46) dan juara (+$1,50) — RECLAIM 8 masuk V pagi
+lebih murah, TP deep 210 kebuka, tier tengah +75 bps nangkep ayunan kedua.
 
 ## Tuning (log lengkap di btc-race-20261118-work/grades.md)
 

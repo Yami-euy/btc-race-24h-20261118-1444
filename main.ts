@@ -12,7 +12,12 @@
 //      the close to reclaim RECLAIM bps off the running dip low. A 5-bar
 //      uptick fires on dead-cat bounces mid-fall; a reclaim off the low
 //      waits for the turn. This is the single biggest change from a plain
-//      drop+bounce trigger.
+//      drop+bounce trigger. The reclaim is deliberately light (8 bps):
+//      on the dev window the morning V turns only 9 bps off its low
+//      before running, and waiting for 15 bps costs ~$280/BTC of entry
+//      price — enough to drop the peak-over-cost below the deep target.
+//      The stop and the regime filter are what guard the weaker
+//      confirmation, not a bigger reclaim.
 //   3. Two tranches. The first takes TRANCHE1_PCT of the cash on the first
 //      stabilised dip. If the market legs down again to a much deeper dip
 //      (DIP2), the rest of the cash goes in at the better price. Most days
@@ -20,8 +25,14 @@
 //      not for averaging down a slow bleed.
 //   4. Tiered take-profit. An entry that caught a deep dip (at least
 //      DEEP_DIP below the rolling high) is allowed to ride to TP_DEEP: the
-//      big morning V pays for the day. A shallow entry banks TP_SHALLOW
-//      fast instead of giving a small recovery back.
+//      big morning V pays for the day. A mid-depth entry (at least
+//      MID_DIP) rides to TP_MID: on the dev window the second dip
+//      recovers +78 bps over its fill, so a 60 bps target leaves money
+//      on the table while 75 bps still clears with margin (80 bps
+//      misses outright). A shallow entry banks TP_SHALLOW fast instead
+//      of giving a small recovery back. Each tranche carries its own
+//      target from its own entry dip, so the second tranche of a deep
+//      morning also rides to TP_DEEP.
 //   5. A regime filter. No new entries while the trailing 360-bar return
 //      is under REGIME_BPS: the afternoon of the dev window grinds down
 //      with shallow dips that recover ~30 bps and then keep falling, and
@@ -46,9 +57,11 @@ const HI_BARS = 240; // rolling high looks back 4 hours of closes
 const DIP1_BPS = 100; // first tranche: close 1.0% under the rolling high
 const DIP2_BPS = 190; // second tranche: a much deeper second leg
 const DEEP_DIP_BPS = 180; // an entry this deep rides to the big target
+const MID_DIP_BPS = 140; // a mid-depth entry rides to the middle target
 const TRANCHE1_PCT = 90; // first tranche takes 90% of the cash
-const RECLAIM_BPS = 15; // entry waits for 0.15% back off the dip low
-const TP_DEEP_BPS = 180; // deep entry: ride to +1.8% over its cost
+const RECLAIM_BPS = 8; // entry waits for 0.08% back off the dip low
+const TP_DEEP_BPS = 210; // deep entry: ride to +2.1% over its cost
+const TP_MID_BPS = 75; // mid entry: ride to +0.75% over its cost
 const TP_SHALLOW_BPS = 60; // shallow entry: bank +0.6% fast
 const STOP_BPS = 120; // cut the whole position at -1.2% on blended cost
 const REGIME_BPS = -25; // skip entries while the 6h return is under -0.25%
@@ -239,7 +252,7 @@ await runBars({
         client_id: freshId('b'),
       };
       pendingBuys.set(buy.client_id, {
-        tpBps: dip <= -DEEP_DIP_BPS ? TP_DEEP_BPS : TP_SHALLOW_BPS,
+        tpBps: dip <= -DEEP_DIP_BPS ? TP_DEEP_BPS : dip <= -MID_DIP_BPS ? TP_MID_BPS : TP_SHALLOW_BPS,
         entryBar: closes.length,
         kind: 't1',
       });
